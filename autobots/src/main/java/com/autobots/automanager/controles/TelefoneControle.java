@@ -1,8 +1,12 @@
 package com.autobots.automanager.controles;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.web.bind.annotation.*;
 
 import com.autobots.automanager.entidades.Cliente;
@@ -22,8 +26,27 @@ public class TelefoneControle {
 	private TelefoneRepositorio telefoneRepositorio;
 	
 	@GetMapping
-	public List<Telefone> listarTelefones(){
-		return telefoneRepositorio.findAll();
+	public List<EntityModel<Telefone>> listarTelefones() {
+		List<Telefone> telefones = telefoneRepositorio.findAll();
+		return telefones.stream()
+				.map(telefone -> {
+					EntityModel<Telefone> model = EntityModel.of(telefone);
+					Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TelefoneControle.class).buscarTelefone(telefone.getId())).withSelfRel();
+					model.add(selfLink);
+					return model;
+				})
+				.collect(Collectors.toList());
+	}
+
+	@GetMapping("/{id}")
+	public EntityModel<Telefone> buscarTelefone(@PathVariable Long id) {
+		Telefone telefone = telefoneRepositorio.findById(id)
+				.orElseThrow(() -> new RuntimeException("Telefone não encontrado com id: " + id));
+
+		EntityModel<Telefone> model = EntityModel.of(telefone);
+		Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TelefoneControle.class).buscarTelefone(id)).withSelfRel();
+		model.add(selfLink);
+		return model;
 	}
 	
 	@PostMapping("/cadastrar/{idCliente}")
@@ -36,7 +59,7 @@ public class TelefoneControle {
 	}
 	
 	@PutMapping("/atualizar/{id}")
-	public void atualizarTelefone(@PathVariable Long id, @RequestBody Telefone atualizacao){
+	public void atualizarTelefone(@PathVariable Long id, @RequestBody Telefone atualizacao) {
 		Telefone telefone = telefoneRepositorio.findById(id)
 				.orElseThrow(() -> new RuntimeException("Telefone não encontrado com id: " + id));
 
