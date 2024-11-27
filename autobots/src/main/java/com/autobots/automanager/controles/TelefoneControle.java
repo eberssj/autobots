@@ -49,6 +49,14 @@ public class TelefoneControle {
 		return model;
 	}
 	
+	
+	@GetMapping("/cliente/{idCliente}")
+	public List<Telefone> obterTelefonesPorCliente(@PathVariable Long idCliente) {
+	    Cliente cliente = clienteRepositorio.findById(idCliente)
+	            .orElseThrow(() -> new RuntimeException("Cliente não encontrado com id: " + idCliente));
+	    return cliente.getTelefones();  // Retorna os telefones do cliente
+	}
+	
 	@PostMapping("/cadastrar/{idCliente}")
 	public void cadastrarTelefone(@PathVariable Long idCliente, @RequestBody Telefone telefone) {
 	    Cliente cliente = clienteRepositorio.findById(idCliente)

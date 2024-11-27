@@ -42,6 +42,14 @@ public class DocumentoControle {
 
         return EntityModel.of(documento, selfLink, allDocumentsLink);
     }
+    
+    @GetMapping("/cliente/{idCliente}")
+    public List<Documento> obterDocumentosPorCliente(@PathVariable Long idCliente) {
+        Cliente cliente = clienteRepositorio.findById(idCliente)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado com id: " + idCliente));
+        return cliente.getDocumentos();  // Retorna os documentos do cliente
+    }
+
 
     @PostMapping("/cadastrar/{idCliente}")
     public EntityModel<Documento> cadastrarDocumento(@PathVariable Long idCliente, @RequestBody Documento documento) {

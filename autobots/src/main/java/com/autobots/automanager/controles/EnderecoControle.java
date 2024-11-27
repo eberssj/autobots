@@ -48,6 +48,15 @@ public class EnderecoControle {
         model.add(selfLink);
         return model;
     }
+    
+
+    @GetMapping("/cliente/{idCliente}")
+    public Endereco obterEnderecoPorCliente(@PathVariable Long idCliente) {
+        Cliente cliente = clienteRepositorio.findById(idCliente)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado com id: " + idCliente));
+        return cliente.getEndereco();  // Retorna o endereço do cliente
+    }
+
 
     @PostMapping("/cadastrar/{idCliente}")
     public void cadastrarEndereco(@PathVariable Long idCliente, @RequestBody Endereco endereco) {

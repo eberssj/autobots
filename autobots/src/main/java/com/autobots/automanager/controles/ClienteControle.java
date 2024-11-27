@@ -40,9 +40,27 @@ public class ClienteControle {
     }
 
     @GetMapping("/{id}")
-    public Cliente obterCliente(@PathVariable long id) {
-        return repositorio.findById(id).orElseThrow(() -> new RuntimeException("Cliente não encontrado com ID: " + id));
+    public EntityModel<Cliente> obterCliente(@PathVariable long id) {
+        Cliente cliente = repositorio.findById(id)
+            .orElseThrow(() -> new RuntimeException("Cliente não encontrado com ID: " + id));
+
+        // Links principais
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).obterCliente(cliente.getId())).withSelfRel();
+        Link allClientsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).obterClientes()).withRel("todos-clientes");
+
+        // Links de navegação para ações relacionadas
+        Link updateLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).atualizarCliente(cliente.getId(), cliente)).withRel("atualizar-cliente");
+        Link deleteLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).excluirCliente(cliente.getId())).withRel("excluir-cliente");
+
+        // Links para recursos relacionados (documentos, telefones, endereços, etc.)
+        Link documentosLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(DocumentoControle.class).obterDocumentosPorCliente(cliente.getId())).withRel("documentos");
+        Link telefonesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TelefoneControle.class).obterTelefonesPorCliente(cliente.getId())).withRel("telefones");
+        Link enderecoLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EnderecoControle.class).obterEnderecoPorCliente(cliente.getId())).withRel("endereco");
+
+        // Retorna o cliente com todos os links
+        return EntityModel.of(cliente, selfLink, allClientsLink, updateLink, deleteLink, documentosLink, telefonesLink, enderecoLink);
     }
+
 
     @PostMapping("/cadastro")
     public void cadastrarCliente(@RequestBody Cliente cliente) {
@@ -63,24 +81,48 @@ public class ClienteControle {
             Hibernate.initialize(cliente.getEndereco());
             Hibernate.initialize(cliente.getTelefones());
 
-            // Criar link para a entidade atualizada
+            // Links principais
             Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).obterCliente(cliente.getId())).withSelfRel();
-            return EntityModel.of(cliente, selfLink);
+            Link allClientsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).obterClientes()).withRel("todos-clientes");
+
+            // Links de navegação para ações relacionadas
+            Link updateLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).atualizarCliente(cliente.getId(), cliente)).withRel("atualizar-cliente");
+            Link deleteLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).excluirCliente(cliente.getId())).withRel("excluir-cliente");
+
+            // Links para recursos relacionados (documentos, telefones, endereços, etc.)
+            Link documentosLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(DocumentoControle.class).obterDocumentosPorCliente(cliente.getId())).withRel("documentos");
+            Link telefonesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TelefoneControle.class).obterTelefonesPorCliente(cliente.getId())).withRel("telefones");
+            Link enderecoLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EnderecoControle.class).obterEnderecoPorCliente(cliente.getId())).withRel("endereco");
+
+            // Retorna o cliente com todos os links
+            return EntityModel.of(cliente, selfLink, allClientsLink, updateLink, deleteLink, documentosLink, telefonesLink, enderecoLink);
         }
-        // Caso o cliente não seja encontrado, lançar uma exceção ou retornar um erro adequado
         throw new RuntimeException("Cliente não encontrado com ID: " + id);
     }
-    
+
     @DeleteMapping("/excluir/{id}")
     public EntityModel<Cliente> excluirCliente(@PathVariable long id) {
         Cliente cliente = repositorio.findById(id).orElse(null);
         if (cliente != null) {
+            // Excluindo o cliente
             repositorio.delete(cliente);
-            // Criar link para a lista de todos os clientes após exclusão
+
+            // Links principais para navegação
             Link allClientsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).obterClientes()).withRel("todos-clientes");
-            return EntityModel.of(cliente, allClientsLink);
+
+            // Links para recursos relacionados (documentos, telefones, endereços, etc.)
+            Link documentosLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(DocumentoControle.class).obterDocumentosPorCliente(cliente.getId())).withRel("documentos");
+            Link telefonesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(TelefoneControle.class).obterTelefonesPorCliente(cliente.getId())).withRel("telefones");
+            Link enderecoLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(EnderecoControle.class).obterEnderecoPorCliente(cliente.getId())).withRel("endereco");
+
+            // Link para obter a lista de clientes após a exclusão
+            Link listClientsLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ClienteControle.class).obterClientes()).withRel("listar-clientes");
+
+            // Retorna o cliente excluído com links para navegação
+            return EntityModel.of(cliente, allClientsLink, documentosLink, telefonesLink, enderecoLink, listClientsLink);
         }
-        // Caso o cliente não seja encontrado, lançar uma exceção ou retornar um erro adequado
+
+        // Caso o cliente não seja encontrado
         throw new RuntimeException("Cliente não encontrado com ID: " + id);
     }
 
